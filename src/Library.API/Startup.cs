@@ -1,4 +1,4 @@
-using Library.API.Configurations;
+﻿using Library.API.Configurations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -20,8 +20,14 @@ namespace Library.API
         public void ConfigureServices(IServiceCollection services)
         {
             services
-                .AddControllers()
-                .AddNewtonsoftJson();
+                .AddControllers(configure =>
+                {
+                    // 对于请求不支持的数据格式返回406
+                    configure.ReturnHttpNotAcceptable = true;
+                    // configure.OutputFormatters.Add(new XmlSerializerOutputFormatter()); // 仅支持输出xml格式
+                })
+                .AddNewtonsoftJson()
+                .AddXmlSerializerFormatters();
 
             services.AddSwaggerConfiguration();
 

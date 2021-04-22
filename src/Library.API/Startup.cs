@@ -29,6 +29,10 @@ namespace Library.API
                 .AddNewtonsoftJson()
                 .AddXmlSerializerFormatters();
 
+            services.AddDatabaseConfiguration(Configuration);
+
+            services.AddAutoMapperConfiguration();
+
             services.AddSwaggerConfiguration();
 
             services.AddDependencyInjectionConfiguration();

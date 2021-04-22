@@ -1,4 +1,5 @@
-﻿using Library.API.Services;
+﻿using Library.API.Filters;
+using Library.API.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
@@ -10,8 +11,11 @@ namespace Library.API.Configurations
         {
             if (services == null) throw new ArgumentNullException(nameof(services));
 
-            services.AddScoped<IAuthorRepository, AuthorMockRepository>();
-            services.AddScoped<IBookRepository, BookMockRepository>();
+            services.AddScoped<CheckAuthorExistFilterAttribute>();
+
+            services.AddScoped<IAuthorRepository, AuthorRepository>();
+            services.AddScoped<IBookRepository, BookRepository>();
+            services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
         }
     }
 }

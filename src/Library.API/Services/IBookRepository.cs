@@ -1,23 +1,15 @@
-﻿using Library.API.Models;
+﻿using Library.API.Entities;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Library.API.Services
 {
-    public interface IBookRepository 
+    public interface IBookRepository : IRepositoryBase<Book>, IRepositoryBase2<Book, Guid>
     {
-        #region Mock
 
-        IEnumerable<BookDto> GetBooksForAuthor(Guid authorId);
+        Task<IEnumerable<Book>> GetBooksAsync(Guid authorId);
 
-        BookDto GetBookForAuthor(Guid authorId, Guid bookId);
-
-        void AddBook(BookDto book);
-
-        void DeleteBook(BookDto book);
-
-        void UpdateBook(Guid authorId, Guid bookId, BookForUpdateDto updateBook);
-
-        #endregion
+        Task<Book> GetBookAsync(Guid authorId, Guid bookId);
     }
 }

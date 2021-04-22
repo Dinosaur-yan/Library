@@ -86,6 +86,51 @@
             <param name="patchDocument"></param>
             <returns></returns>
         </member>
+        <member name="P:Library.API.Entities.Author.Id">
+            <summary>
+            唯一标识
+            </summary>
+        </member>
+        <member name="P:Library.API.Entities.Author.Name">
+            <summary>
+            姓名
+            </summary>
+        </member>
+        <member name="P:Library.API.Entities.Author.BirthDate">
+            <summary>
+            出生日期
+            </summary>
+        </member>
+        <member name="P:Library.API.Entities.Author.Email">
+            <summary>
+            电子邮箱
+            </summary>
+        </member>
+        <member name="P:Library.API.Entities.Book.Id">
+            <summary>
+            唯一标识
+            </summary>
+        </member>
+        <member name="P:Library.API.Entities.Book.Title">
+            <summary>
+            标题
+            </summary>
+        </member>
+        <member name="P:Library.API.Entities.Book.Description">
+            <summary>
+            描述
+            </summary>
+        </member>
+        <member name="P:Library.API.Entities.Book.Pages">
+            <summary>
+            页码
+            </summary>
+        </member>
+        <member name="P:Library.API.Entities.Book.AuthorId">
+            <summary>
+            作者Id
+            </summary>
+        </member>
         <member name="T:Library.API.Models.AuthorDto">
             <summary>
             作者

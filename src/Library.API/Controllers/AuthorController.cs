@@ -1,6 +1,9 @@
 ﻿using Library.API.Models;
+using Library.API.Services;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Library.API.Controllers
 {
@@ -11,14 +14,21 @@ namespace Library.API.Controllers
     [ApiController]
     public class AuthorController : ControllerBase
     {
+        public AuthorController(IAuthorRepository authorRepository)
+        {
+            AuthorRepository = authorRepository;
+        }
+
+        public IAuthorRepository AuthorRepository { get; }
+
         /// <summary>
         /// 获取所有author资源
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public ActionResult<string[]> GetAuthors()
+        public ActionResult<List<AuthorDto>> GetAuthors()
         {
-            return new string[] { "value1", "values2" };
+            return AuthorRepository.GetAuthors().ToList();
         }
 
         /// <summary>
@@ -27,9 +37,17 @@ namespace Library.API.Controllers
         /// <param name="authorId"></param>
         /// <returns></returns>
         [HttpGet("{authorId}", Name = nameof(GetAuthor))]
-        public ActionResult<string> GetAuthor([FromRoute] Guid authorId)
+        public ActionResult<AuthorDto> GetAuthor([FromRoute] Guid authorId)
         {
-            return "value";
+            var author = AuthorRepository.GetAuthor(authorId);
+            if (author == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                return author;
+            }
         }
 
         /// <summary>
@@ -39,7 +57,15 @@ namespace Library.API.Controllers
         [HttpPost]
         public ActionResult CreateAuthor([FromBody] AuthorForCreationDto authorForCreationDto)
         {
-            return CreatedAtRoute(nameof(GetAuthor), new { });
+            var authorDto = new AuthorDto
+            {
+                Name = authorForCreationDto.Name,
+                Age = authorForCreationDto.Age,
+                Email = authorForCreationDto.Email
+            };
+
+            AuthorRepository.AddAuthor(authorDto);
+            return CreatedAtRoute(nameof(GetAuthor), new { authorId = authorDto.Id }, authorDto);
         }
 
         /// <summary>
@@ -50,6 +76,13 @@ namespace Library.API.Controllers
         [HttpDelete("{authorId}")]
         public ActionResult<string[]> DeleteAuthor([FromRoute] Guid authorId)
         {
+            var author = AuthorRepository.GetAuthor(authorId);
+            if (author == null)
+            {
+                return NotFound();
+            }
+
+            AuthorRepository.DeleteAuthor(author);
             return NoContent();
         }
     }

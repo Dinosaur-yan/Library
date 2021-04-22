@@ -1,4 +1,4 @@
-using Library.API.Configurations;
+﻿using Library.API.Configurations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -19,9 +19,19 @@ namespace Library.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            services
+                .AddControllers(configure =>
+                {
+                    // 对于请求不支持的数据格式返回406
+                    configure.ReturnHttpNotAcceptable = true;
+                    // configure.OutputFormatters.Add(new XmlSerializerOutputFormatter()); // 仅支持输出xml格式
+                })
+                .AddNewtonsoftJson()
+                .AddXmlSerializerFormatters();
 
             services.AddSwaggerConfiguration();
+
+            services.AddDependencyInjectionConfiguration();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

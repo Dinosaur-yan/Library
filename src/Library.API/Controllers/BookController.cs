@@ -1,7 +1,10 @@
 ﻿using Library.API.Models;
+using Library.API.Services;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Library.API.Controllers
 {
@@ -12,14 +15,28 @@ namespace Library.API.Controllers
     [ApiController]
     public class BookController : ControllerBase
     {
+        public BookController(IAuthorRepository authorRepository, IBookRepository bookRepository)
+        {
+            AuthorRepository = authorRepository;
+            BookRepository = bookRepository;
+        }
+
+        public IAuthorRepository AuthorRepository { get; }
+        public IBookRepository BookRepository { get; }
+
         /// <summary>
         /// 获取所有book资源
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public ActionResult<string[]> GetBooks([FromRoute] Guid authorId)
+        public ActionResult<List<BookDto>> GetBooks([FromRoute] Guid authorId)
         {
-            return new string[] { "value1", "values2" };
+            if (!AuthorRepository.IsAuthorExists(authorId))
+            {
+                return NotFound();
+            }
+
+            return BookRepository.GetBooksForAuthor(authorId).ToList();
         }
 
         /// <summary>
@@ -29,9 +46,20 @@ namespace Library.API.Controllers
         /// <param name="bookId"></param>
         /// <returns></returns>
         [HttpGet("{bookId}", Name = nameof(GetBook))]
-        public ActionResult<string> GetBook([FromRoute] Guid authorId, Guid bookId)
+        public ActionResult<BookDto> GetBook([FromRoute] Guid authorId, Guid bookId)
         {
-            return "value";
+            if (!AuthorRepository.IsAuthorExists(authorId))
+            {
+                return NotFound();
+            }
+
+            var targetBook = BookRepository.GetBookForAuthor(authorId, bookId);
+            if (targetBook == null)
+            {
+                return NotFound();
+            }
+
+            return targetBook;
         }
 
         /// <summary>
@@ -41,7 +69,22 @@ namespace Library.API.Controllers
         [HttpPost]
         public ActionResult CreateBook([FromRoute] Guid authorId, [FromBody] BookForCreationDto bookForCreationDto)
         {
-            return CreatedAtRoute(nameof(GetBook), new { });
+            if (!AuthorRepository.IsAuthorExists(authorId))
+            {
+                return NotFound();
+            }
+
+            var bookDto = new BookDto
+            {
+                Id = Guid.NewGuid(),
+                Title = bookForCreationDto.Title,
+                Description = bookForCreationDto.Description,
+                Pages = bookForCreationDto.Pages,
+                AuthorId = authorId
+            };
+
+            BookRepository.AddBook(bookDto);
+            return CreatedAtRoute(nameof(GetBook), new { authorId, bookId = bookDto.Id }, bookDto);
         }
 
         /// <summary>
@@ -53,6 +96,18 @@ namespace Library.API.Controllers
         [HttpDelete("{bookId}")]
         public ActionResult<string[]> DeleteBook([FromRoute] Guid authorId, Guid bookId)
         {
+            if (!AuthorRepository.IsAuthorExists(authorId))
+            {
+                return NotFound();
+            }
+
+            var book = BookRepository.GetBookForAuthor(authorId, bookId);
+            if (book == null)
+            {
+                return NotFound();
+            }
+
+            BookRepository.DeleteBook(book);
             return NoContent();
         }
 
@@ -61,10 +116,23 @@ namespace Library.API.Controllers
         /// </summary>
         /// <param name="authorId"></param>
         /// <param name="bookId"></param>
+        /// <param name="updateBook"></param>
         /// <returns></returns>
         [HttpPut("{bookId}")]
-        public ActionResult<string[]> UpdateBook([FromRoute] Guid authorId, Guid bookId)
+        public ActionResult UpdateBook([FromRoute] Guid authorId, Guid bookId, [FromBody] BookForUpdateDto updateBook)
         {
+            if (!AuthorRepository.IsAuthorExists(authorId))
+            {
+                return NotFound();
+            }
+
+            var book = BookRepository.GetBookForAuthor(authorId, bookId);
+            if (book == null)
+            {
+                return NotFound();
+            }
+
+            BookRepository.UpdateBook(authorId, bookId, updateBook);
             return NoContent();
         }
 
@@ -76,8 +144,33 @@ namespace Library.API.Controllers
         /// <param name="patchDocument"></param>
         /// <returns></returns>
         [HttpPatch("{bookId}")]
-        public ActionResult<string[]> PartiallyUpdateBook([FromRoute] Guid authorId, Guid bookId, [FromBody] JsonPatchDocument<BookForUpdateDto> patchDocument)
+        public ActionResult PartiallyUpdateBook([FromRoute] Guid authorId, Guid bookId, [FromBody] JsonPatchDocument<BookForUpdateDto> patchDocument)
         {
+            if (!AuthorRepository.IsAuthorExists(authorId))
+            {
+                return NotFound();
+            }
+
+            var book = BookRepository.GetBookForAuthor(authorId, bookId);
+            if (book == null)
+            {
+                return NotFound();
+            }
+
+            var bookToPatch = new BookForUpdateDto
+            {
+                Title = book.Title,
+                Description = book.Description,
+                Pages = book.Pages
+            };
+
+            patchDocument.ApplyTo(bookToPatch, ModelState);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            BookRepository.UpdateBook(authorId, bookId, bookToPatch);
             return NoContent();
         }
     }

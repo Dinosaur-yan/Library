@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using NLog.Web;
+using System;
 
 namespace Library.API
 {
@@ -7,7 +10,21 @@ namespace Library.API
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            var logger = NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
+            try
+            {
+                IHostBuilder hostBuilder = CreateHostBuilder(args);
+                IHost host = hostBuilder.Build();
+                host.Run();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Stopped program because of exception");
+            }
+            finally
+            {
+                NLog.LogManager.Shutdown();
+            }
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -15,6 +32,12 @@ namespace Library.API
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                });
+                })
+            .ConfigureLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.SetMinimumLevel(LogLevel.Trace);
+            })
+            .UseNLog();
     }
 }

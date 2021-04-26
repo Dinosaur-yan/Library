@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
 using Library.API.Entities;
+using Library.API.Helpers;
 using Library.API.Models;
 using Library.API.Services;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,12 +32,38 @@ namespace Library.API.Controllers
         /// 获取所有author资源
         /// </summary>
         /// <returns></returns>
-        [HttpGet]
-        public async Task<ActionResult<List<AuthorDto>>> GetAuthors()
+        [HttpGet(Name = nameof(GetAuthors))]
+        public async Task<ActionResult<List<AuthorDto>>> GetAuthors([FromQuery] AuthorResourceParameters parameters)
         {
-            var authors = (await AuthorRepository.GetAllAsync()).OrderBy(author => author.Name);
+            var pagedList = await AuthorRepository.GetAllAsync(parameters);
 
-            var authorDtoList = Mapper.Map<IEnumerable<AuthorDto>>(authors);
+            var paginationMetadata = new
+            {
+                totalCount = pagedList.TotalCount,
+                pageSize = pagedList.PageSize,
+                currentPage = pagedList.CurrentPage,
+                totalPages = pagedList.TotalPages,
+                previousPageLink = pagedList.HasPrevious ? Url.Link(nameof(GetAuthors), new
+                {
+                    pageNumber = pagedList.CurrentPage - 1,
+                    pageSize = pagedList.PageSize,
+                    name = parameters.Name,
+                    searchQuery = parameters.SearchQuery,
+                    sortBy = parameters.SortBy
+                }) : null,
+                nextPageLink = pagedList.HasNext ? Url.Link(nameof(GetAuthors), new
+                {
+                    pageNumber = pagedList.CurrentPage + 1,
+                    pageSize = pagedList.PageSize,
+                    name = parameters.Name,
+                    searchQuery = parameters.SearchQuery,
+                    sortBy = parameters.SortBy
+                }) : null
+            };
+
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(paginationMetadata));
+
+            var authorDtoList = Mapper.Map<IEnumerable<AuthorDto>>(pagedList);
             return authorDtoList.ToList();
         }
 

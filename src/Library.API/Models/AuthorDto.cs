@@ -26,5 +26,10 @@ namespace Library.API.Models
         /// 电子邮箱
         /// </summary>
         public string Email { get; set; }
+
+        /// <summary>
+        /// 出生地址
+        /// </summary>
+        public string BirthPlace { get; set; }
     }
 }

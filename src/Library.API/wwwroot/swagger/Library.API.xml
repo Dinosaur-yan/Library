@@ -9,7 +9,7 @@
             author
             </summary>
         </member>
-        <member name="M:Library.API.Controllers.AuthorController.GetAuthors">
+        <member name="M:Library.API.Controllers.AuthorController.GetAuthors(Library.API.Helpers.AuthorResourceParameters)">
             <summary>
             获取所有author资源
             </summary>
@@ -101,6 +101,11 @@
             出生日期
             </summary>
         </member>
+        <member name="P:Library.API.Entities.Author.BirthPlace">
+            <summary>
+            出生地址
+            </summary>
+        </member>
         <member name="P:Library.API.Entities.Author.Email">
             <summary>
             电子邮箱
@@ -131,6 +136,40 @@
             作者Id
             </summary>
         </member>
+        <member name="P:Library.API.Helpers.ApiError.Message">
+            <summary>
+            错误消息
+            </summary>
+        </member>
+        <member name="P:Library.API.Helpers.ApiError.Detail">
+            <summary>
+            详细信息
+            </summary>
+        </member>
+        <member name="M:Library.API.Helpers.PagedList`1.CreateAsync(System.Linq.IQueryable{`0},System.Int32,System.Int32)">
+            <summary>
+            创建分页数据
+            </summary>
+            <param name="source"></param>
+            <param name="pageNumber"></param>
+            <param name="pageSize"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Library.API.Helpers.PropertyMapping">
+            <summary>
+            属性映射
+            </summary>
+        </member>
+        <member name="P:Library.API.Helpers.PropertyMapping.TargetProperty">
+            <summary>
+            目标属性
+            </summary>
+        </member>
+        <member name="P:Library.API.Helpers.PropertyMapping.IsRevert">
+            <summary>
+            是否顺序相反
+            </summary>
+        </member>
         <member name="T:Library.API.Models.AuthorDto">
             <summary>
             作者
@@ -154,6 +193,11 @@
         <member name="P:Library.API.Models.AuthorDto.Email">
             <summary>
             电子邮箱
+            </summary>
+        </member>
+        <member name="P:Library.API.Models.AuthorDto.BirthPlace">
+            <summary>
+            出生地址
             </summary>
         </member>
         <member name="P:Library.API.Models.AuthorForCreationDto.Name">

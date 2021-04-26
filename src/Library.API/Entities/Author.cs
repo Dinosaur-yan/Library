@@ -27,6 +27,11 @@ namespace Library.API.Entities
         public DateTimeOffset BirthDate { get; set; }
 
         /// <summary>
+        /// 出生地址
+        /// </summary>
+        public string BirthPlace { get; set; }
+
+        /// <summary>
         /// 电子邮箱
         /// </summary>
         [Required]

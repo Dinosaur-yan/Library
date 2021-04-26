@@ -1,4 +1,5 @@
 ﻿using Library.API.Configurations;
+using Library.API.Filters;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -22,6 +23,7 @@ namespace Library.API
             services
                 .AddControllers(configure =>
                 {
+                    configure.Filters.Add<JsonExceptionFilter>();
                     // 对于请求不支持的数据格式返回406
                     configure.ReturnHttpNotAcceptable = true;
                     // configure.OutputFormatters.Add(new XmlSerializerOutputFormatter()); // 仅支持输出xml格式

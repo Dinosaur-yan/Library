@@ -43,6 +43,8 @@ namespace Library.API
 
             services.AddMemoryCacheConfiguration();
 
+            services.AddRedisCacheConfiguration(Configuration);
+
             services.AddDependencyInjectionConfiguration();
         }
 

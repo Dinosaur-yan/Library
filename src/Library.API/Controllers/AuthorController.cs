@@ -4,6 +4,7 @@ using Library.API.Helpers;
 using Library.API.Models;
 using Library.API.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
 using System;
@@ -21,13 +22,15 @@ namespace Library.API.Controllers
     [ApiController]
     public class AuthorController : ControllerBase
     {
-        public AuthorController(IMapper mapper, IAuthorRepository authorRepository)
+        public AuthorController(IMapper mapper, IDistributedCache distributedCache, IAuthorRepository authorRepository)
         {
             Mapper = mapper;
+            DistributedCache = distributedCache;
             AuthorRepository = authorRepository;
         }
 
         public IMapper Mapper { get; }
+        public IDistributedCache DistributedCache { get; }
         public IAuthorRepository AuthorRepository { get; }
 
         /// <summary>
@@ -35,10 +38,42 @@ namespace Library.API.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet(Name = nameof(GetAuthors))]
-        [ResponseCache(Duration = 180, Location = ResponseCacheLocation.Any, VaryByQueryKeys = new string[] { "searchQuery" })]
+        [ResponseCache(Duration = 15, Location = ResponseCacheLocation.Any, VaryByQueryKeys = new string[] { "searchQuery" })]
         public async Task<ActionResult<List<AuthorDto>>> GetAuthors([FromQuery] AuthorResourceParameters parameters)
         {
-            var pagedList = await AuthorRepository.GetAllAsync(parameters);
+            PagedList<Author> pagedList = null; //= await AuthorRepository.GetAllAsync(parameters);
+
+            // 为了简单，仅当其不包含过滤和搜索时进行缓存
+            if (string.IsNullOrWhiteSpace(parameters.Name) && string.IsNullOrWhiteSpace(parameters.SearchQuery))
+            {
+                string cacheKey = $"authors_page_{parameters.PageNumber}_pageSize_{parameters.PageSize}_sort_{parameters.SortBy}";
+                string cachedContent = await DistributedCache.GetStringAsync(cacheKey);
+
+                JsonSerializerSettings settings = new JsonSerializerSettings();
+                settings.Converters.Add(new PagedListConverter<Author>());
+                settings.Formatting = Formatting.Indented;
+
+                if (string.IsNullOrWhiteSpace(cachedContent))
+                {
+                    pagedList = await AuthorRepository.GetAllAsync(parameters);
+                    DistributedCacheEntryOptions options = new DistributedCacheEntryOptions
+                    {
+                        // 缓存超过2分钟没有被访问，则被移除
+                        SlidingExpiration = TimeSpan.FromMinutes(2)
+                    };
+
+                    var serializedContent = JsonConvert.SerializeObject(pagedList, settings);
+                    await DistributedCache.SetStringAsync(cacheKey, serializedContent);
+                }
+                else
+                {
+                    pagedList = JsonConvert.DeserializeObject<PagedList<Author>>(cachedContent, settings);
+                }
+            }
+            else
+            {
+                pagedList = await AuthorRepository.GetAllAsync(parameters);
+            }
 
             var paginationMetadata = new
             {

@@ -1,13 +1,18 @@
 ﻿using AutoMapper;
 using Library.API.Entities;
+using Library.API.Filters;
+using Library.API.Helpers;
 using Library.API.Models;
 using Library.API.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Library.API.Controllers
@@ -17,6 +22,7 @@ namespace Library.API.Controllers
     /// </summary>
     [Route("api/authors/{authorId}/books")]
     [ApiController]
+    [ServiceFilter(typeof(CheckAuthorExistFilterAttribute))]
     public class BookController : ControllerBase
     {
         public BookController(IMapper mapper, IMemoryCache memoryCache, IRepositoryWrapper repositoryWrapper)
@@ -71,6 +77,14 @@ namespace Library.API.Controllers
             if (book == null)
             {
                 return NotFound();
+            }
+
+            var entityHash = HashFactory.GetHash(book);
+            Response.Headers[HeaderNames.ETag] = entityHash;
+
+            if (Request.Headers.TryGetValue(HeaderNames.IfNoneMatch, out var requestETag) && entityHash == requestETag)
+            {
+                return StatusCode((int)HttpStatusCode.NotModified);
             }
 
             var bookDto = Mapper.Map<BookDto>(book);
@@ -131,6 +145,7 @@ namespace Library.API.Controllers
         /// <param name="updateBook"></param>
         /// <returns></returns>
         [HttpPut("{bookId}")]
+        [CheckIfMatchHeaderFilter]
         public async Task<ActionResult> UpdateBook([FromRoute] Guid authorId, Guid bookId, [FromBody] BookForUpdateDto updateBook)
         {
             var book = await RepositoryWrapper.Book.GetBookAsync(authorId, bookId);
@@ -139,12 +154,21 @@ namespace Library.API.Controllers
                 return NotFound();
             }
 
+            var entityHash = HashFactory.GetHash(book);
+            if (Request.Headers.TryGetValue(HeaderNames.IfMatch, out var requestETag) && entityHash != requestETag)
+            {
+                return StatusCode(StatusCodes.Status412PreconditionFailed);
+            }
+
             Mapper.Map(updateBook, book, typeof(BookForUpdateDto), typeof(Book));
             RepositoryWrapper.Book.Update(book);
             if (!await RepositoryWrapper.Book.SaveAsync())
             {
                 throw new Exception("更新资源book失败");
             }
+
+            var entityNewHash = HashFactory.GetHash(book);
+            Response.Headers[HeaderNames.ETag] = entityNewHash;
 
             return NoContent();
         }
@@ -157,12 +181,19 @@ namespace Library.API.Controllers
         /// <param name="patchDocument"></param>
         /// <returns></returns>
         [HttpPatch("{bookId}")]
+        [CheckIfMatchHeaderFilter]
         public async Task<ActionResult> PartiallyUpdateBook([FromRoute] Guid authorId, Guid bookId, [FromBody] JsonPatchDocument<BookForUpdateDto> patchDocument)
         {
             var book = await RepositoryWrapper.Book.GetBookAsync(authorId, bookId);
             if (book == null)
             {
                 return NotFound();
+            }
+
+            var entityHash = HashFactory.GetHash(book);
+            if (Request.Headers.TryGetValue(HeaderNames.IfMatch, out var requestETag) && entityHash != requestETag)
+            {
+                return StatusCode(StatusCodes.Status412PreconditionFailed);
             }
 
             var bookUpdateDto = Mapper.Map<BookForUpdateDto>(book);
@@ -179,6 +210,10 @@ namespace Library.API.Controllers
             {
                 throw new Exception("更新资源book失败");
             }
+
+            var entityNewHash = HashFactory.GetHash(book);
+            Response.Headers[HeaderNames.ETag] = entityNewHash;
+
             return NoContent();
         }
     }

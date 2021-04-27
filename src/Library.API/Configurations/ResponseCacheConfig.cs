@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
 
 namespace Library.API.Configurations
@@ -9,6 +10,8 @@ namespace Library.API.Configurations
     {
         public static void AddResponseCachingConfiguration(this IServiceCollection services)
         {
+            if (services == null) throw new ArgumentNullException(nameof(services));
+
             services.AddResponseCaching(options =>
             {
                 // 是否区分请求路径的大小写，默认为true
@@ -22,6 +25,8 @@ namespace Library.API.Configurations
 
         public static void UseResponseCachingSetup(this IApplicationBuilder app)
         {
+            if (app == null) throw new ArgumentNullException(nameof(app));
+
             app.UseResponseCaching();
         }
 

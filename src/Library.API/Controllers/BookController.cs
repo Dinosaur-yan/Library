@@ -4,6 +4,7 @@ using Library.API.Models;
 using Library.API.Services;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,13 +19,15 @@ namespace Library.API.Controllers
     [ApiController]
     public class BookController : ControllerBase
     {
-        public BookController(IMapper mapper, IRepositoryWrapper repositoryWrapper)
+        public BookController(IMapper mapper, IMemoryCache memoryCache, IRepositoryWrapper repositoryWrapper)
         {
             Mapper = mapper;
+            MemoryCache = memoryCache;
             RepositoryWrapper = repositoryWrapper;
         }
 
         public IMapper Mapper { get; }
+        public IMemoryCache MemoryCache { get; }
         public IRepositoryWrapper RepositoryWrapper { get; }
 
         /// <summary>
@@ -34,10 +37,25 @@ namespace Library.API.Controllers
         [HttpGet]
         public async Task<ActionResult<List<BookDto>>> GetBooks([FromRoute] Guid authorId)
         {
-            var books = await RepositoryWrapper.Book.GetBooksAsync(authorId);
+            string key = $"{authorId}_books";
+            if (!MemoryCache.TryGetValue(key, out List<BookDto> bookDtoList))
+            {
+                var books = await RepositoryWrapper.Book.GetBooksAsync(authorId);
+                bookDtoList = Mapper.Map<IEnumerable<BookDto>>(books).ToList();
+                //MemoryCache.Set(key, bookDtoList);
 
-            var bookDtoList = Mapper.Map<IEnumerable<BookDto>>(books);
-            return bookDtoList.ToList();
+                /**
+                 * 使用MemoryCacheEntryOptions对象可控制缓存时间和优先级等属性
+                 *      1>. 合理使用有效时间，不仅能确保资源被及时更新，也能使当资源不再使用时，所占用的内存能自动恢复
+                 *      2>. 使用优先级属性，决定了当服务器内存不足时是否先将该项移除，当优先级为低时，将会被先移除。
+                 *          如果不希望缓存项被移除，则应设置Priority属性为CacheItemPriority.NeverRemove。
+                 */
+                MemoryCacheEntryOptions options = new MemoryCacheEntryOptions();
+                options.AbsoluteExpiration = DateTime.Now.AddMinutes(10);   // 有效时间为10分钟
+                options.Priority = CacheItemPriority.Normal;    // 优先级为默认
+                MemoryCache.Set(key, bookDtoList, options);
+            }
+            return bookDtoList;
         }
 
         /// <summary>

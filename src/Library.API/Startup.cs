@@ -41,6 +41,8 @@ namespace Library.API
 
             services.AddResponseCachingConfiguration();
 
+            services.AddMemoryCacheConfiguration();
+
             services.AddDependencyInjectionConfiguration();
         }
 

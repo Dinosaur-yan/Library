@@ -4,10 +4,12 @@ using Library.API.Helpers;
 using Library.API.Models;
 using Library.API.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Library.API.Controllers
@@ -33,6 +35,7 @@ namespace Library.API.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet(Name = nameof(GetAuthors))]
+        [ResponseCache(Duration = 180, Location = ResponseCacheLocation.Any, VaryByQueryKeys = new string[] { "searchQuery" })]
         public async Task<ActionResult<List<AuthorDto>>> GetAuthors([FromQuery] AuthorResourceParameters parameters)
         {
             var pagedList = await AuthorRepository.GetAllAsync(parameters);
@@ -73,6 +76,7 @@ namespace Library.API.Controllers
         /// <param name="authorId"></param>
         /// <returns></returns>
         [HttpGet("{authorId}", Name = nameof(GetAuthor))]
+        [ResponseCache(CacheProfileName = "Never")]
         public async Task<ActionResult<AuthorDto>> GetAuthor([FromRoute] Guid authorId)
         {
             var author = await AuthorRepository.GetByIdAsync(authorId);
@@ -80,10 +84,16 @@ namespace Library.API.Controllers
             {
                 return NotFound();
             }
-            else
+
+            var entityHash = HashFactory.GetHash(author);
+            Response.Headers[HeaderNames.ETag] = entityHash;
+
+            if (Request.Headers.TryGetValue(HeaderNames.IfNoneMatch, out var requestETag) && entityHash == requestETag)
             {
-                return Mapper.Map<AuthorDto>(author);
+                return StatusCode((int)HttpStatusCode.NotModified);
             }
+
+            return Mapper.Map<AuthorDto>(author);
         }
 
         /// <summary>

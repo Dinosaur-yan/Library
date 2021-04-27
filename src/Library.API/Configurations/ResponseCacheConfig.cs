@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Library.API.Configurations
 {
-    public static class AddResponseCacheConfig
+    public static class ResponseCacheConfig
     {
         public static void AddResponseCachingConfiguration(this IServiceCollection services)
         {

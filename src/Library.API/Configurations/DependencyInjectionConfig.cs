@@ -12,6 +12,7 @@ namespace Library.API.Configurations
             if (services == null) throw new ArgumentNullException(nameof(services));
 
             services.AddScoped<CheckAuthorExistFilterAttribute>();
+            services.AddScoped<CheckIfMatchHeaderFilterAttribute>();
 
             services.AddScoped<IAuthorRepository, AuthorRepository>();
             services.AddScoped<IBookRepository, BookRepository>();

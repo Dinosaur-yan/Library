@@ -4,6 +4,23 @@
         <name>Library.API</name>
     </assembly>
     <members>
+        <member name="M:Library.API.Configurations.MemoryCacheConfig.AddMemoryCacheConfiguration(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            内存缓存事实上是一个键值对字典
+        </member>
+        <member name="M:Library.API.Configurations.ResponseCacheConfig.AddCacheProfiles(System.Collections.Generic.IDictionary{System.String,Microsoft.AspNetCore.Mvc.CacheProfile})">
+            缓存是一种通过存储资源的备份，在请求时返回资源备份的技术
+            1. http缓存（是否使用缓存Cache-Control、缓存有效时间Expires，只有当请求是GET或HEAD并且返回结果为200 OK状态码时，响应才支持缓存）
+             常见的Cache-Control指令：
+             public: 表明响应可以被任何对象（如发送请求的客户端和代理服务器）缓存
+             private: 表明响应只能为单个用户缓存，不能作为共享缓存（及代理服务器不能缓存它）
+             max-age: 设置缓存的最大存储时间，超过这个时间缓存被认为过期，单位为秒；当与Expires同时出现时，优先使用max-age
+             no-cache: 必须到原始服务器验证后才能使用的缓存
+                 验证缓存自愿的方式有两种
+                 (1) 通过响应消息头中的Last-Modified（资源最后更新的时间），在验证时，需要在请求头中添加If-Modified-Since消息头，这个值是客户端最后一次收到该响应资源Last-Modified的值
+                 (2) 通过使用实体标签ETag（Entity Tag），在验证时，需要在请求头中添加If-None-Match，这个值是客户端最后一次从服务器获取的ETag值；
+                     当ETag一致时返回304Not Modified状态码，不一致时处理请求，
+             no-store: 缓存不应存储有关客户端请求或服务器的任何内容 
+        </member>
         <member name="T:Library.API.Controllers.AuthorController">
             <summary>
             author
@@ -135,6 +152,19 @@
             <summary>
             作者Id
             </summary>
+        </member>
+        <member name="M:Library.API.Filters.CheckIfMatchHeaderFilterAttribute.OnActionExecutionAsync(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext,Microsoft.AspNetCore.Mvc.Filters.ActionExecutionDelegate)">
+            并发：当多个客户端同时请求一个资源
+             当多个客户端同时请求一个资源，并且都对该资源进行数据修改时，由于客户端向服务器提交的时间不一致，结果导致先提交的数据被后提交的数据覆盖（后修改者有效）
+            
+            并发处理策略：
+             1>. 保守式并发控制（悲观并发控制）：当客户端修改资源时，有服务器将其锁定，这样其他用户就不能进行修改
+             2>. 开放式并发控制（乐观并发控制）：通过表示资源的当前状态的散列值实现的。当客户修改资源时，将其散列值一并提交给服务器（使用If-Match消息头），服务器检查该值是否有效
+                 有效：该资源在此期间未被修改，服务器允许进行修改
+                 失效：该资源已经被修改过，服务器将拒绝客户端的修改请求（返回412PreconditionFailed状态码，表示先决条件失败）
+                 
+            If-None-Match：验证成功,返回304NotModified状态码(未发生变化)
+            If-Match：验证成功，则继续执行操作，否则返回412PreconditionFailed状态码
         </member>
         <member name="P:Library.API.Helpers.ApiError.Message">
             <summary>

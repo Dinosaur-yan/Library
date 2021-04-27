@@ -27,6 +27,8 @@ namespace Library.API
                     // 对于请求不支持的数据格式返回406
                     configure.ReturnHttpNotAcceptable = true;
                     // configure.OutputFormatters.Add(new XmlSerializerOutputFormatter()); // 仅支持输出xml格式
+
+                    configure.CacheProfiles.AddCacheProfiles();
                 })
                 .AddNewtonsoftJson()
                 .AddXmlSerializerFormatters();
@@ -36,6 +38,12 @@ namespace Library.API
             services.AddAutoMapperConfiguration();
 
             services.AddSwaggerConfiguration();
+
+            services.AddResponseCachingConfiguration();
+
+            services.AddMemoryCacheConfiguration();
+
+            services.AddRedisCacheConfiguration(Configuration);
 
             services.AddDependencyInjectionConfiguration();
         }
@@ -53,6 +61,8 @@ namespace Library.API
             app.UseRouting();
 
             app.UseAuthorization();
+
+            app.UseResponseCachingSetup();
 
             app.UseEndpoints(endpoints =>
             {

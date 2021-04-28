@@ -50,12 +50,14 @@ namespace Library.API.Controllers
                 bookDtoList = Mapper.Map<IEnumerable<BookDto>>(books).ToList();
                 //MemoryCache.Set(key, bookDtoList);
 
+#pragma warning disable CS1587 // XML 注释没有放在有效语言元素上
                 /**
                  * 使用MemoryCacheEntryOptions对象可控制缓存时间和优先级等属性
                  *      1>. 合理使用有效时间，不仅能确保资源被及时更新，也能使当资源不再使用时，所占用的内存能自动恢复
                  *      2>. 使用优先级属性，决定了当服务器内存不足时是否先将该项移除，当优先级为低时，将会被先移除。
                  *          如果不希望缓存项被移除，则应设置Priority属性为CacheItemPriority.NeverRemove。
                  */
+#pragma warning restore CS1587 // XML 注释没有放在有效语言元素上
                 MemoryCacheEntryOptions options = new MemoryCacheEntryOptions();
                 options.AbsoluteExpiration = DateTime.Now.AddMinutes(10);   // 有效时间为10分钟
                 options.Priority = CacheItemPriority.Normal;    // 优先级为默认

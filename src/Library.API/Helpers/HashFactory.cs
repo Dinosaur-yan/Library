@@ -10,7 +10,10 @@ namespace Library.API.Helpers
         public static string GetHash(object obj)
         {
             string result = string.Empty;
-            var json = JsonConvert.SerializeObject(obj);
+            var json = JsonConvert.SerializeObject(obj, new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            });
             var bytes = Encoding.UTF8.GetBytes(json);
 
             using (var hasher = MD5.Create())

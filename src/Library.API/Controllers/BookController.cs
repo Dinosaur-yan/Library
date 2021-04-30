@@ -40,14 +40,23 @@ namespace Library.API.Controllers
         /// 获取所有book资源
         /// </summary>
         /// <returns></returns>
-        [HttpGet]
-        public async Task<ActionResult<List<BookDto>>> GetBooks([FromRoute] Guid authorId)
+        [HttpGet(Name = nameof(GetBooksAsync))]
+        public async Task<ActionResult<ResourceCollect<BookDto>>> GetBooksAsync([FromRoute] Guid authorId)
         {
             string key = $"{authorId}_books";
-            if (!MemoryCache.TryGetValue(key, out List<BookDto> bookDtoList))
+            if (!MemoryCache.TryGetValue(key, out ResourceCollect<BookDto> resourceList))
             {
                 var books = await RepositoryWrapper.Book.GetBooksAsync(authorId);
-                bookDtoList = Mapper.Map<IEnumerable<BookDto>>(books).ToList();
+                if (books == null || !books.Any())
+                {
+                    return NotFound();
+                }
+
+                var bookDtoList = Mapper.Map<IEnumerable<BookDto>>(books).ToList();
+                bookDtoList = bookDtoList.Select(book => CreateLinkForBook(authorId, book)).ToList();
+
+                resourceList = new ResourceCollect<BookDto>(bookDtoList);
+
                 //MemoryCache.Set(key, bookDtoList);
 
 #pragma warning disable CS1587 // XML 注释没有放在有效语言元素上
@@ -61,9 +70,9 @@ namespace Library.API.Controllers
                 MemoryCacheEntryOptions options = new MemoryCacheEntryOptions();
                 options.AbsoluteExpiration = DateTime.Now.AddMinutes(10);   // 有效时间为10分钟
                 options.Priority = CacheItemPriority.Normal;    // 优先级为默认
-                MemoryCache.Set(key, bookDtoList, options);
+                MemoryCache.Set(key, resourceList, options);
             }
-            return bookDtoList;
+            return resourceList;
         }
 
         /// <summary>
@@ -72,8 +81,8 @@ namespace Library.API.Controllers
         /// <param name="authorId"></param>
         /// <param name="bookId"></param>
         /// <returns></returns>
-        [HttpGet("{bookId}", Name = nameof(GetBook))]
-        public async Task<ActionResult<BookDto>> GetBook([FromRoute] Guid authorId, Guid bookId)
+        [HttpGet("{bookId}", Name = nameof(GetBookAsync))]
+        public async Task<ActionResult<BookDto>> GetBookAsync([FromRoute] Guid authorId, Guid bookId)
         {
             var book = await RepositoryWrapper.Book.GetBookAsync(authorId, bookId);
             if (book == null)
@@ -90,15 +99,15 @@ namespace Library.API.Controllers
             }
 
             var bookDto = Mapper.Map<BookDto>(book);
-            return bookDto;
+            return CreateLinkForBook(authorId, bookDto);
         }
 
         /// <summary>
         /// 创建book资源
         /// </summary>
         /// <returns></returns>
-        [HttpPost]
-        public async Task<ActionResult> CreateBook([FromRoute] Guid authorId, [FromBody] BookForCreationDto bookForCreationDto)
+        [HttpPost(Name = nameof(CreateBookAsync))]
+        public async Task<ActionResult> CreateBookAsync([FromRoute] Guid authorId, [FromBody] BookForCreationDto bookForCreationDto)
         {
             var book = Mapper.Map<Book>(bookForCreationDto);
             book.AuthorId = authorId;
@@ -111,7 +120,7 @@ namespace Library.API.Controllers
             }
 
             var bookDto = Mapper.Map<BookDto>(book);
-            return CreatedAtRoute(nameof(GetBook), new { authorId, bookId = bookDto.Id }, bookDto);
+            return CreatedAtRoute(nameof(GetBookAsync), new { authorId, bookId = bookDto.Id }, bookDto);
         }
 
         /// <summary>
@@ -120,8 +129,8 @@ namespace Library.API.Controllers
         /// <param name="authorId"></param>
         /// <param name="bookId"></param>
         /// <returns></returns>
-        [HttpDelete("{bookId}")]
-        public async Task<ActionResult> DeleteBook([FromRoute] Guid authorId, Guid bookId)
+        [HttpDelete("{bookId}", Name = nameof(DeleteBookAsync))]
+        public async Task<ActionResult> DeleteBookAsync([FromRoute] Guid authorId, Guid bookId)
         {
             var book = await RepositoryWrapper.Book.GetBookAsync(authorId, bookId);
             if (book == null)
@@ -146,9 +155,9 @@ namespace Library.API.Controllers
         /// <param name="bookId"></param>
         /// <param name="updateBook"></param>
         /// <returns></returns>
-        [HttpPut("{bookId}")]
+        [HttpPut("{bookId}", Name = nameof(UpdateBookAsync))]
         [CheckIfMatchHeaderFilter]
-        public async Task<ActionResult> UpdateBook([FromRoute] Guid authorId, Guid bookId, [FromBody] BookForUpdateDto updateBook)
+        public async Task<ActionResult> UpdateBookAsync([FromRoute] Guid authorId, Guid bookId, [FromBody] BookForUpdateDto updateBook)
         {
             var book = await RepositoryWrapper.Book.GetBookAsync(authorId, bookId);
             if (book == null)
@@ -182,9 +191,9 @@ namespace Library.API.Controllers
         /// <param name="bookId"></param>
         /// <param name="patchDocument"></param>
         /// <returns></returns>
-        [HttpPatch("{bookId}")]
+        [HttpPatch("{bookId}", Name = nameof(PartiallyUpdateBookAsync))]
         [CheckIfMatchHeaderFilter]
-        public async Task<ActionResult> PartiallyUpdateBook([FromRoute] Guid authorId, Guid bookId, [FromBody] JsonPatchDocument<BookForUpdateDto> patchDocument)
+        public async Task<ActionResult> PartiallyUpdateBookAsync([FromRoute] Guid authorId, Guid bookId, [FromBody] JsonPatchDocument<BookForUpdateDto> patchDocument)
         {
             var book = await RepositoryWrapper.Book.GetBookAsync(authorId, bookId);
             if (book == null)
@@ -217,6 +226,44 @@ namespace Library.API.Controllers
             Response.Headers[HeaderNames.ETag] = entityNewHash;
 
             return NoContent();
+        }
+
+        private BookDto CreateLinkForBook(Guid authorId, BookDto book)
+        {
+            book.Links.Clear();
+
+            book.Links.Add(new Link(HttpMethods.Get.ToString(),
+                "self",
+                Url.Link(nameof(GetBookAsync), new { authorId, bookId = book.Id })));
+
+            book.Links.Add(new Link(HttpMethods.Delete.ToString(),
+                "delete book",
+                Url.Link(nameof(DeleteBookAsync), new { authorId, bookId = book.Id })));
+
+            book.Links.Add(new Link(HttpMethods.Put.ToString(),
+                "update book",
+                Url.Link(nameof(UpdateBookAsync), new { authorId, bookId = book.Id })));
+
+            book.Links.Add(new Link(HttpMethods.Patch.ToString(),
+                "partially update book",
+                Url.Link(nameof(PartiallyUpdateBookAsync), new { authorId, bookId = book.Id })));
+
+            return book;
+        }
+
+        private ResourceCollect<BookDto> CreateLinksForBooks(Guid authorId, ResourceCollect<BookDto> books)
+        {
+            books.Links.Clear();
+
+            books.Links.Add(new Link(HttpMethods.Get.ToString(),
+                "self",
+                Url.Link(nameof(GetBookAsync), new { authorId })));
+
+            books.Links.Add(new Link(HttpMethods.Delete.ToString(),
+                "create book",
+                Url.Link(nameof(CreateBookAsync), null)));
+
+            return books;
         }
     }
 }

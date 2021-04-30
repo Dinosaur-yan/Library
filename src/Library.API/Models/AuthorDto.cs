@@ -5,7 +5,7 @@ namespace Library.API.Models
     /// <summary>
     /// 作者
     /// </summary>
-    public class AuthorDto
+    public class AuthorDto : Resource
     {
         /// <summary>
         /// 唯一标识

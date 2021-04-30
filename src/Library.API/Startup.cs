@@ -30,7 +30,10 @@ namespace Library.API
 
                     configure.CacheProfiles.AddCacheProfiles();
                 })
-                .AddNewtonsoftJson()
+                .AddNewtonsoftJson(options =>
+                {
+                    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+                })
                 .AddXmlSerializerFormatters();
 
             services.AddDatabaseConfiguration(Configuration);

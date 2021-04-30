@@ -4,10 +4,12 @@ using Library.API.Helpers;
 using Library.API.Models;
 using Library.API.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -37,9 +39,9 @@ namespace Library.API.Controllers
         /// 获取所有author资源
         /// </summary>
         /// <returns></returns>
-        [HttpGet(Name = nameof(GetAuthors))]
+        [HttpGet(Name = nameof(GetAuthorsAsync))]
         [ResponseCache(Duration = 15, Location = ResponseCacheLocation.Any, VaryByQueryKeys = new string[] { "searchQuery" })]
-        public async Task<ActionResult<List<AuthorDto>>> GetAuthors([FromQuery] AuthorResourceParameters parameters)
+        public async Task<ActionResult<ResourceCollect<AuthorDto>>> GetAuthorsAsync([FromQuery] AuthorResourceParameters parameters)
         {
             PagedList<Author> pagedList = null; //= await AuthorRepository.GetAllAsync(parameters);
 
@@ -81,7 +83,7 @@ namespace Library.API.Controllers
                 pageSize = pagedList.PageSize,
                 currentPage = pagedList.CurrentPage,
                 totalPages = pagedList.TotalPages,
-                previousPageLink = pagedList.HasPrevious ? Url.Link(nameof(GetAuthors), new
+                previousPageLink = pagedList.HasPrevious ? Url.Link(nameof(GetAuthorsAsync), new
                 {
                     pageNumber = pagedList.CurrentPage - 1,
                     pageSize = pagedList.PageSize,
@@ -89,7 +91,7 @@ namespace Library.API.Controllers
                     searchQuery = parameters.SearchQuery,
                     sortBy = parameters.SortBy
                 }) : null,
-                nextPageLink = pagedList.HasNext ? Url.Link(nameof(GetAuthors), new
+                nextPageLink = pagedList.HasNext ? Url.Link(nameof(GetAuthorsAsync), new
                 {
                     pageNumber = pagedList.CurrentPage + 1,
                     pageSize = pagedList.PageSize,
@@ -102,7 +104,10 @@ namespace Library.API.Controllers
             Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(paginationMetadata));
 
             var authorDtoList = Mapper.Map<IEnumerable<AuthorDto>>(pagedList);
-            return authorDtoList.ToList();
+            authorDtoList = authorDtoList.Select(author => CreateLinkForAuthor(author));
+
+            var resourceList = new ResourceCollect<AuthorDto>(authorDtoList.ToList());
+            return CreateLinksForAuthors(resourceList);
         }
 
         /// <summary>
@@ -110,9 +115,9 @@ namespace Library.API.Controllers
         /// </summary>
         /// <param name="authorId"></param>
         /// <returns></returns>
-        [HttpGet("{authorId}", Name = nameof(GetAuthor))]
+        [HttpGet("{authorId}", Name = nameof(GetAuthorAsync))]
         [ResponseCache(CacheProfileName = "Never")]
-        public async Task<ActionResult<AuthorDto>> GetAuthor([FromRoute] Guid authorId)
+        public async Task<ActionResult<AuthorDto>> GetAuthorAsync([FromRoute] Guid authorId)
         {
             var author = await AuthorRepository.GetByIdAsync(authorId);
             if (author == null)
@@ -128,15 +133,16 @@ namespace Library.API.Controllers
                 return StatusCode((int)HttpStatusCode.NotModified);
             }
 
-            return Mapper.Map<AuthorDto>(author);
+            var authorDto = Mapper.Map<AuthorDto>(author);
+            return CreateLinkForAuthor(authorDto);
         }
 
         /// <summary>
         /// 创建author资源
         /// </summary>
         /// <returns></returns>
-        [HttpPost]
-        public async Task<ActionResult> CreateAuthor([FromBody] AuthorForCreationDto authorForCreationDto)
+        [HttpPost(Name = nameof(CreateAuthorAsync))]
+        public async Task<ActionResult> CreateAuthorAsync([FromBody] AuthorForCreationDto authorForCreationDto)
         {
             var author = Mapper.Map<Author>(authorForCreationDto);
 
@@ -148,7 +154,7 @@ namespace Library.API.Controllers
             }
 
             var authorDto = Mapper.Map<AuthorDto>(author);
-            return CreatedAtRoute(nameof(GetAuthor), new { authorId = authorDto.Id }, authorDto);
+            return CreatedAtRoute(nameof(GetAuthorAsync), new { authorId = authorDto.Id }, authorDto);
         }
 
         /// <summary>
@@ -156,8 +162,8 @@ namespace Library.API.Controllers
         /// </summary>
         /// <param name="authorId"></param>
         /// <returns></returns>
-        [HttpDelete("{authorId}")]
-        public async Task<ActionResult> DeleteAuthor([FromRoute] Guid authorId)
+        [HttpDelete("{authorId}", Name = nameof(DeleteAuthorAsync))]
+        public async Task<ActionResult> DeleteAuthorAsync([FromRoute] Guid authorId)
         {
             var author = await AuthorRepository.GetByIdAsync(authorId);
             if (author == null)
@@ -173,6 +179,56 @@ namespace Library.API.Controllers
             }
 
             return NoContent();
+        }
+
+        private AuthorDto CreateLinkForAuthor(AuthorDto author)
+        {
+            author.Links.Clear();
+            author.Links.Add(new Link(HttpMethod.Get.ToString(),
+                "self",
+                Url.Link(nameof(GetAuthorAsync), new { authorId = author.Id })));
+
+            author.Links.Add(new Link(HttpMethod.Delete.ToString(),
+                "delete author",
+                Url.Link(nameof(DeleteAuthorAsync), new { authorId = author.Id })));
+
+            author.Links.Add(new Link(HttpMethod.Get.ToString(),
+                "author's books",
+                Url.Link(nameof(BookController.GetBooksAsync), new { authorId = author.Id })));
+
+            return author;
+        }
+
+        private ResourceCollect<AuthorDto> CreateLinksForAuthors(ResourceCollect<AuthorDto> authors,
+            AuthorResourceParameters parameters = null, dynamic paginationData = null)
+        {
+            authors.Links.Clear();
+            authors.Links.Add(new Link(HttpMethod.Get.ToString(),
+                "self",
+                Url.Link(nameof(GetAuthorsAsync), parameters)));
+
+            authors.Links.Add(new Link(HttpMethod.Post.ToString(),
+                "create author",
+                Url.Link(nameof(CreateAuthorAsync), null)));
+
+            if (paginationData != null)
+            {
+                if (paginationData.previousePageLink != null)
+                {
+                    authors.Links.Add(new Link(HttpMethod.Get.ToString(),
+                        "previous page",
+                        paginationData.previousePageLink));
+                }
+
+                if (paginationData.nextPageLink != null)
+                {
+                    authors.Links.Add(new Link(HttpMethod.Get.ToString(),
+                        "next page",
+                        paginationData.nextPageLink));
+                }
+            }
+
+            return authors;
         }
     }
 }

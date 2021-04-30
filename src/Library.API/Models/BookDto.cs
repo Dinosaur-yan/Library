@@ -5,7 +5,7 @@ namespace Library.API.Models
     /// <summary>
     /// 书
     /// </summary>
-    public class BookDto
+    public class BookDto : Resource
     {
         /// <summary>
         /// 唯一标识

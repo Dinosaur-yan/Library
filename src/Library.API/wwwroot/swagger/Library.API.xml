@@ -103,6 +103,21 @@
             <param name="patchDocument"></param>
             <returns></returns>
         </member>
+        <member name="T:Library.API.Controllers.PersonController">
+            <summary>
+            Action级别版本控制
+            </summary>
+        </member>
+        <member name="T:Library.API.Controllers.V1.ValuesController">
+            <summary>
+            控制器级别版本控制
+            </summary>
+        </member>
+        <member name="T:Library.API.Controllers.V2.ValuesController">
+            <summary>
+            控制器级别版本控制
+            </summary>
+        </member>
         <member name="P:Library.API.Entities.Author.Id">
             <summary>
             唯一标识

@@ -46,6 +46,8 @@ namespace Library.API
             services.AddRedisCacheConfiguration(Configuration);
 
             services.AddDependencyInjectionConfiguration();
+
+            services.AddApiVersioningConfiguration();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

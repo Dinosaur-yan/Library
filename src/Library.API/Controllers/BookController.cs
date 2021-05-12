@@ -67,9 +67,11 @@ namespace Library.API.Controllers
                  *          如果不希望缓存项被移除，则应设置Priority属性为CacheItemPriority.NeverRemove。
                  */
 #pragma warning restore CS1587 // XML 注释没有放在有效语言元素上
-                MemoryCacheEntryOptions options = new MemoryCacheEntryOptions();
-                options.AbsoluteExpiration = DateTime.Now.AddMinutes(10);   // 有效时间为10分钟
-                options.Priority = CacheItemPriority.Normal;    // 优先级为默认
+                MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpiration = DateTime.Now.AddMinutes(10),   // 有效时间为10分钟
+                    Priority = CacheItemPriority.Normal    // 优先级为默认
+                };
                 MemoryCache.Set(key, resourceList, options);
             }
             return resourceList;

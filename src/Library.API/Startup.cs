@@ -1,7 +1,9 @@
 ﻿using Library.API.Configurations;
 using Library.API.Filters;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,6 +31,10 @@ namespace Library.API
                     // configure.OutputFormatters.Add(new XmlSerializerOutputFormatter()); // 仅支持输出xml格式
 
                     configure.CacheProfiles.AddCacheProfiles();
+
+                    // 控制器访问添加认证
+                    var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+                    configure.Filters.Add(new AuthorizeFilter(policy));
                 })
                 .AddNewtonsoftJson(options =>
                 {
@@ -36,20 +42,31 @@ namespace Library.API
                 })
                 .AddXmlSerializerFormatters();
 
+            // 认证
+            services.AddAuthenticationConfiguration(Configuration);
+
+            // 数据库上下文
             services.AddDatabaseConfiguration(Configuration);
 
+            // AutoMapper
             services.AddAutoMapperConfiguration();
 
-            services.AddSwaggerConfiguration();
-
+            // 服务器缓存
             services.AddResponseCachingConfiguration();
 
+            // 内存缓存
             services.AddMemoryCacheConfiguration();
 
+            // Redis缓存
             services.AddRedisCacheConfiguration(Configuration);
 
+            // 注入服务
             services.AddDependencyInjectionConfiguration();
 
+            // Swagger
+            services.AddSwaggerConfiguration();
+
+            // 版本控制
             services.AddApiVersioningConfiguration();
         }
 
@@ -64,6 +81,8 @@ namespace Library.API
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 

@@ -41,6 +41,23 @@ namespace Library.API.Configurations
                     ClockSkew = TimeSpan.Zero,   //验证时间的时间偏移值
                 };
             });
+
+            // jwt(json web token)是一个开放标准（RFC7519），由三部分组成：头部（header）、负载（payload）、签名（signature），各部分之间以.分割
+            // 典型的格式为：header.payload.signature
+            // 负载部分包括要传输的信息，通常由多个claim构成；claim有3种类型：已注册、公共、私有
+            // 已注册：
+            //      iss     Issue               签发者
+            //      sub     Subject             主题
+            //      aud     Audience            接收方
+            //      exp     Expiration time     过期时间
+            //      nbf     Not before          JWT有效的开始时间
+            //      iat     Issue at            签发JWT时的时间
+            //      jti     JWT ID              JWT的唯一标识符
+            // 公共的：
+            //      常见的如name、email、garden
+            //      这一类的claim通常都已经在互联网数字分配机构（Internet Assigned Numbers Authority, IANA） json web token claims中注册
+            // 私有的：
+            //      自定义，信息发送方与接收方约定好的claim
         }
     }
 }

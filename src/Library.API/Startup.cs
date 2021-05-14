@@ -42,11 +42,11 @@ namespace Library.API
                 })
                 .AddXmlSerializerFormatters();
 
-            // 认证
-            services.AddAuthenticationConfiguration(Configuration);
-
             // 数据库上下文
             services.AddDatabaseConfiguration(Configuration);
+
+            // 认证
+            services.AddAuthenticationConfiguration(Configuration);
 
             // AutoMapper
             services.AddAutoMapperConfiguration();

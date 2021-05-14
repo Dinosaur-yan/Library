@@ -28,6 +28,11 @@
                      当ETag一致时返回304Not Modified状态码，不一致时处理请求，
              no-store: 缓存不应存储有关客户端请求或服务器的任何内容 
         </member>
+        <member name="T:Library.API.Controllers.AuthenticateController">
+            <summary>
+            认证
+            </summary>
+        </member>
         <member name="T:Library.API.Controllers.AuthorController">
             <summary>
             author

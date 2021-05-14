@@ -35,7 +35,7 @@ namespace Library.API.Configurations
                     ValidateLifetime = true,
                     ValidateIssuer = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = tokenSection["Issue"],    //合法的签发这
+                    ValidIssuer = tokenSection["Issuer"],    //合法的签发这
                     ValidAudience = tokenSection["Audience"],   //合法的接收方
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenSection["Key"])),   //用于指定进行签名验证的安全密钥
                     ClockSkew = TimeSpan.Zero,   //验证时间的时间偏移值

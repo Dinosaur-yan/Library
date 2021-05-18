@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Library.API.Filters;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -17,7 +18,31 @@ namespace Library.API.Configurations
          * 
          * 
          * 授权（Authorization）：验证一个用户是否有权限做某事的过程
-         * 基础角色的授权、基于Claim的授权、基于策略的授权
+         * 基础角色的授权、基于Claim（声明）的授权、基于策略的授权
+         * 1. 角色
+         *     如果要同时允许多个角色访问，则可以使用逗号分隔角色名，这样只要具有其中某一个角色的用户即可访问该接口（角色为Administrator或者Manager的都可以访问）
+         *     [Authorize(Roles = "Administrator,Manager")]
+         *     基于策略的角色检查
+         *     [Authorize(Policy  = "ElevatedRights")]
+         *     public class DemoController : Controller
+         *     {
+         *          可以通过在操作级别应用其他角色授权属性来进一步限制访问权限，只有Administrator可以访问
+         *          [Authorize(Roles = "Administrator")]
+         *          public ActionResult ShutDown()
+         *          {
+         *          }
+         *     }
+         *     如果某个接口要求用户同时具有多个角色才能够访问，则可以为其添加多个带有Roles属性的[Authorize]特性，如下（角色为Administrator且是Manager可以进行访问）
+         *     [Authorize(Roles = "Administrator")]
+         *     [Authorize(Roles = "Manager")]
+         *     public class DemoController : Controller
+         *     {
+         *     }
+         * 2. 声明（claim）
+         * 
+         * 
+         * 3. 策略
+         * 
          */
         public static void AddAuthenticationConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
@@ -32,7 +57,7 @@ namespace Library.API.Configurations
             })
             .AddJwtBearer(options =>
             {
-                #region 认证
+                #region jwt
 
                 // jwt(json web token)是一个开放标准（RFC7519），由三部分组成：头部（header）、负载（payload）、签名（signature），各部分之间以.分割
                 // 典型的格式为：header.payload.signature
@@ -64,6 +89,21 @@ namespace Library.API.Configurations
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenSection["Key"])),   //用于指定进行签名验证的安全密钥
                     ClockSkew = TimeSpan.Zero,   //验证时间的时间偏移值
                 };
+            });
+
+            services.AddAuthorization(options =>
+            {
+                // 基于策略的角色检查
+                options.AddPolicy("RequireAdministratorRole", policy => policy.RequireRole("Administrator"));
+                options.AddPolicy("ElevatedRights", policy => policy.RequireRole("Administrator", "Manager"));
+                // 基于声明的授权
+                // 要求用户必须具有类型为Administrator的Claim
+                options.AddPolicy("AdministratorOnly", policy => policy.RequireClaim("Administrator"));
+                // LimitedUsers则要求用户必须具有类型为UserId的Claim，且它的值必须为指定的值
+                options.AddPolicy("LimitedUsers", policy => policy.RequireClaim("UserId", new string[] { "1", "2", "3", "4", "5" }));
+
+                // 自定义策略
+                options.AddPolicy("RegisteredMoreThan3Days", builder => builder.Requirements.Add(new RegisteredMoreThan3DaysRequirement()));
             });
         }
     }

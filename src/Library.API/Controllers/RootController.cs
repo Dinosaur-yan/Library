@@ -1,4 +1,5 @@
 ﻿using Library.API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ namespace Library.API.Controllers
      */
     [Route("api")]
     [ApiController]
+    [Authorize(Policy = "RegisteredMoreThan3Days")]
     public class RootController : ControllerBase
     {
         [HttpGet(Name = nameof(GetRoot))]

@@ -145,7 +145,7 @@ namespace Library.API.Controllers
             IdentityResult result = await UserManager.CreateAsync(user, registerUser.Password);
             if (result.Succeeded)
             {
-                await AddUserToRoleAsync(user, "Administrator");
+                await AddUserToRoleAsync(user, /*"Administrator"*/registerUser.RoleName);
                 return Ok();
             }
             else

@@ -40,7 +40,7 @@ namespace Library.API.Controllers
         /// <param name="loginUser"></param>
         /// <returns></returns>
         [HttpPost("token", Name = nameof(GenerateToken))]
-        public ActionResult GenerateToken([FromBody] LoginUser loginUser)
+        public ActionResult<TokenResult> GenerateToken([FromBody] LoginUser loginUser)
         {
             if (loginUser == null || loginUser.UserName.ToLower() != LoginUser.demoName || loginUser.Password.ToLower() != LoginUser.demoPwd)
             {
@@ -54,11 +54,11 @@ namespace Library.API.Controllers
 
             var jwtToken = GetJwtSecurityToken(claims);
 
-            return Ok(new
+            return new TokenResult
             {
-                token = new JwtSecurityTokenHandler().WriteToken(jwtToken),
-                expiration = TimeZoneInfo.ConvertTimeFromUtc(jwtToken.ValidTo, TimeZoneInfo.Local)
-            });
+                Token = new JwtSecurityTokenHandler().WriteToken(jwtToken),
+                Expiration = TimeZoneInfo.ConvertTimeFromUtc(jwtToken.ValidTo, TimeZoneInfo.Local)
+            };
         }
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace Library.API.Controllers
         /// <param name="loginUser"></param>
         /// <returns></returns>
         [HttpPost("token2", Name = nameof(GenerateTokenAsync))]
-        public async Task<ActionResult> GenerateTokenAsync([FromBody] LoginUser loginUser)
+        public async Task<ActionResult<TokenResult>> GenerateTokenAsync([FromBody] LoginUser loginUser)
         {
             var user = await UserManager.FindByEmailAsync(loginUser.Email);
             if (user == null)
@@ -100,11 +100,11 @@ namespace Library.API.Controllers
 
             var jwtToken = GetJwtSecurityToken(claims);
 
-            return Ok(new
+            return new TokenResult
             {
-                token = new JwtSecurityTokenHandler().WriteToken(jwtToken),
-                expiration = TimeZoneInfo.ConvertTimeFromUtc(jwtToken.ValidTo, TimeZoneInfo.Local)
-            });
+                Token = new JwtSecurityTokenHandler().WriteToken(jwtToken),
+                Expiration = TimeZoneInfo.ConvertTimeFromUtc(jwtToken.ValidTo, TimeZoneInfo.Local)
+            };
         }
 
         /// <summary>

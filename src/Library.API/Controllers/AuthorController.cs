@@ -3,6 +3,7 @@ using Library.API.Entities;
 using Library.API.Helpers;
 using Library.API.Models;
 using Library.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
 using Microsoft.Extensions.Caching.Distributed;
@@ -145,6 +146,7 @@ namespace Library.API.Controllers
         {
             var author = Mapper.Map<Author>(authorForCreationDto);
 
+            author.Id = Guid.NewGuid();
             AuthorRepository.Create(author);
             var result = await AuthorRepository.SaveAsync();
             if (!result)

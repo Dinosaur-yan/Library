@@ -21,5 +21,10 @@ namespace Library.API.Models
         /// </summary>
         [EmailAddress(ErrorMessage = "邮箱格式不正确")]
         public string Email { get; set; }
+
+        /// <summary>
+        /// 出生地址
+        /// </summary>
+        public string BirthPlace { get; set; }
     }
 }

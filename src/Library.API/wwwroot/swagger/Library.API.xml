@@ -38,6 +38,20 @@
             3. 策略
             
         </member>
+        <member name="M:Library.API.Configurations.CorsConfig.AddCorsConfiguration(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            CORS，全称Cross-Origin Resource Sharing（跨域资源共享），是一种允许当前域的资源能被其他域访问的机制。
+            https://(协议) 127.0.0.1(主机) :5001(端口) /api/values，3项中有1项不同，那么该资源就会被认为来自不同的域，则浏览器不允许访问
+            
+            对于跨域资源访问，CORS会将它们分为两种类型：简单请求和非简单请求。
+            简单请求：
+                 1. 请求方法为GET、HEAD、POST三者之一
+                 2. 如果请求方法为POST，则Content-Type消息头的值只允许为这3项：application/x- www-form-urlencoded、multipart/form-data、text/plain
+                 3. 不包含自定义消息头
+            
+            非简单请求：不满足其中任何一个条件，如请求方法为PUT和DELETE等，则该请求为非简单请求
+                        非简单请求要比简单请求略为复杂一些。所谓非简单请求，是指在向服务器发送实际请求之前，先发送一个OPTIONS方法的请求，以确认发送正式请求是否安全
+            
+        </member>
         <member name="M:Library.API.Configurations.MemoryCacheConfig.AddMemoryCacheConfiguration(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
             内存缓存事实上是一个键值对字典
         </member>
@@ -264,6 +278,14 @@
             注册日期超过3天后才有权限访问
             </summary>
         </member>
+        <member name="M:Library.API.Filters.RequestRateLimitingMiddleware.Invoke(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            限制每分钟内使用同一方法对同一个资源仅能发起10次请求
+            可使用第三方库AspNetCoreRateLimit
+            </summary>
+            <param name="context"></param>
+            <returns></returns>
+        </member>
         <member name="P:Library.API.Helpers.ApiError.Message">
             <summary>
             错误消息
@@ -341,6 +363,11 @@
         <member name="P:Library.API.Models.AuthorForCreationDto.Email">
             <summary>
             电子邮箱
+            </summary>
+        </member>
+        <member name="P:Library.API.Models.AuthorForCreationDto.BirthPlace">
+            <summary>
+            出生地址
             </summary>
         </member>
         <member name="T:Library.API.Models.BookDto">

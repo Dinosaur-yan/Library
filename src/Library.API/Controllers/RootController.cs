@@ -1,4 +1,5 @@
 ﻿using Library.API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -10,24 +11,26 @@ namespace Library.API.Controllers
      */
     [Route("api")]
     [ApiController]
+    [Authorize(Policy = "RegisteredMoreThan3Days")]
     public class RootController : ControllerBase
     {
         [HttpGet(Name = nameof(GetRoot))]
         public ActionResult<List<Link>> GetRoot()
         {
-            var links = new List<Link>();
-
-            links.Add(new Link(HttpMethods.Get.ToString(),
+            var links = new List<Link>
+            {
+                new Link(HttpMethods.Get.ToString(),
                 "self",
-                Url.Link(nameof(GetRoot), null)));
+                Url.Link(nameof(GetRoot), null)),
 
-            links.Add(new Link(HttpMethods.Get.ToString(),
+                new Link(HttpMethods.Get.ToString(),
                 "get authors",
-                Url.Link(nameof(AuthorController.GetAuthorsAsync), null)));
+                Url.Link(nameof(AuthorController.GetAuthorsAsync), null)),
 
-            links.Add(new Link(HttpMethods.Post.ToString(),
+                new Link(HttpMethods.Post.ToString(),
                 "create author",
-                Url.Link(nameof(AuthorController.CreateAuthorAsync), null)));
+                Url.Link(nameof(AuthorController.CreateAuthorAsync), null))
+            };
 
             return Ok(links);
         }

@@ -4,6 +4,40 @@
         <name>Library.API</name>
     </assembly>
     <members>
+        <member name="M:Library.API.Configurations.AuthenticationConfig.AddAuthenticationConfiguration(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)">
+            认证（Authentication）：验证用户身份的过程
+            1. Basic认证：将用户名、密码以冒号分割，并对组合后的字符串进行Base64编码
+            2. Digest认证（摘要认证）：客户端根据服务器返回的nonce值、用户的认证信息、请求的URL、使用的http方法以MD5散列值算法计算得到
+            3. Bearer认证：主要用在OAuth2.0认证，还广泛应用在常见的基于token的认证中
+            
+            
+            授权（Authorization）：验证一个用户是否有权限做某事的过程
+            基础角色的授权、基于Claim（声明）的授权、基于策略的授权
+            1. 角色
+                如果要同时允许多个角色访问，则可以使用逗号分隔角色名，这样只要具有其中某一个角色的用户即可访问该接口（角色为Administrator或者Manager的都可以访问）
+                [Authorize(Roles = "Administrator,Manager")]
+                基于策略的角色检查
+                [Authorize(Policy  = "ElevatedRights")]
+                public class DemoController : Controller
+                {
+                     可以通过在操作级别应用其他角色授权属性来进一步限制访问权限，只有Administrator可以访问
+                     [Authorize(Roles = "Administrator")]
+                     public ActionResult ShutDown()
+                     {
+                     }
+                }
+                如果某个接口要求用户同时具有多个角色才能够访问，则可以为其添加多个带有Roles属性的[Authorize]特性，如下（角色为Administrator且是Manager可以进行访问）
+                [Authorize(Roles = "Administrator")]
+                [Authorize(Roles = "Manager")]
+                public class DemoController : Controller
+                {
+                }
+            2. 声明（claim）
+            
+            
+            3. 策略
+            
+        </member>
         <member name="M:Library.API.Configurations.MemoryCacheConfig.AddMemoryCacheConfiguration(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
             内存缓存事实上是一个键值对字典
         </member>
@@ -20,6 +54,47 @@
                  (2) 通过使用实体标签ETag（Entity Tag），在验证时，需要在请求头中添加If-None-Match，这个值是客户端最后一次从服务器获取的ETag值；
                      当ETag一致时返回304Not Modified状态码，不一致时处理请求，
              no-store: 缓存不应存储有关客户端请求或服务器的任何内容 
+        </member>
+        <member name="T:Library.API.Controllers.AuthenticateController">
+            <summary>
+            认证
+            </summary>
+        </member>
+        <member name="M:Library.API.Controllers.AuthenticateController.GenerateToken(Library.API.Models.LoginUser)">
+            <summary>
+            demo演示
+            </summary>
+            <param name="loginUser"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Library.API.Controllers.AuthenticateController.GenerateTokenAsync(Library.API.Models.LoginUser)">
+            <summary>
+            Identity校验
+            </summary>
+            <param name="loginUser"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Library.API.Controllers.AuthenticateController.GetJwtSecurityToken(System.Collections.Generic.List{System.Security.Claims.Claim})">
+            <summary>
+            获取SecurityToken
+            </summary>
+            <param name="claims"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Library.API.Controllers.AuthenticateController.AddUserAsync(Library.API.Models.RegisterUser)">
+            <summary>
+            注册用户
+            </summary>
+            <param name="registerUser"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Library.API.Controllers.AuthenticateController.AddUserToRoleAsync(Library.API.Entities.User,System.String)">
+            <summary>
+            添加角色
+            </summary>
+            <param name="user"></param>
+            <param name="roleName"></param>
+            <returns></returns>
         </member>
         <member name="T:Library.API.Controllers.AuthorController">
             <summary>
@@ -183,6 +258,11 @@
                  
             If-None-Match：验证成功,返回304NotModified状态码(未发生变化)
             If-Match：验证成功，则继续执行操作，否则返回412PreconditionFailed状态码
+        </member>
+        <member name="T:Library.API.Filters.RegisteredMoreThan3DaysRequirement">
+            <summary>
+            注册日期超过3天后才有权限访问
+            </summary>
         </member>
         <member name="P:Library.API.Helpers.ApiError.Message">
             <summary>

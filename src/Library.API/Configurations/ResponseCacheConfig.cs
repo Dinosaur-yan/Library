@@ -46,10 +46,8 @@ namespace Library.API.Configurations
          */
         public static void AddCacheProfiles(this IDictionary<string, CacheProfile> cacheProfiles)
         {
-            /**
-             * 通过使用[ResponseCache(CacheProfileName = "Default")]在指定接口前使用该配置
-             * 或者使用[ResponseCache(Duration = 60)]
-             */
+            // 通过使用[ResponseCache(CacheProfileName = "Default")]在指定接口前使用该配置
+            // 或者使用[ResponseCache(Duration = 60)]
             cacheProfiles.Add("Default", new CacheProfile
             {
                 // max-age=60
@@ -60,12 +58,10 @@ namespace Library.API.Configurations
 
             cacheProfiles.Add("Never", new CacheProfile
             {
-                /**
-                 * Location属性可以改变缓存的位置
-                 *      Any: 设置Cache-Control的值为public
-                 *      Client: 设置Cache-Control的值为private
-                 *      None: 设置Cache-Control的值为nocache
-                 */
+                // Location属性可以改变缓存的位置
+                //     Any: 设置Cache-Control的值为public
+                //  Client: 设置Cache-Control的值为private
+                //    None: 设置Cache-Control的值为nocache
                 Location = ResponseCacheLocation.None,
                 NoStore = true
             });

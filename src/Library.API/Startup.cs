@@ -95,6 +95,8 @@ namespace Library.API
 
             app.UseResponseCachingSetup();
 
+            app.UseMiddleware<RequestRateLimitingMiddleware>();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

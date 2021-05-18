@@ -48,6 +48,9 @@ namespace Library.API
             // 认证
             services.AddAuthenticationConfiguration(Configuration);
 
+            // 数据保护API
+            services.AddDataProtection();
+
             // AutoMapper
             services.AddAutoMapperConfiguration();
 

@@ -48,6 +48,9 @@ namespace Library.API
             // 认证
             services.AddAuthenticationConfiguration(Configuration);
 
+            // 数据保护API
+            services.AddDataProtection();
+
             // AutoMapper
             services.AddAutoMapperConfiguration();
 
@@ -77,6 +80,10 @@ namespace Library.API
             {
                 app.UseDeveloperExceptionPage();
             }
+            else
+            {
+                app.UseHsts();
+            }
 
             app.UseHttpsRedirection();
 
@@ -87,6 +94,8 @@ namespace Library.API
             app.UseAuthorization();
 
             app.UseResponseCachingSetup();
+
+            app.UseMiddleware<RequestRateLimitingMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {
